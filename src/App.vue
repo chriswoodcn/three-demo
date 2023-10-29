@@ -3,7 +3,7 @@
  * @Email: chriswoodcn@aliyun.com
  * @Date: 2023-10-27 21:39:21
  * @LastEditors: chriswoodcn
- * @LastEditTime: 2023-10-29 18:30:50
+ * @LastEditTime: 2023-10-29 20:45:08
  * @FilePath: \three-demo\src\App.vue
  * @Description: 
  * Copyright (c) 2023 by chriswoodcn, All Rights Reserved. 
@@ -12,7 +12,8 @@
 import { ref, onMounted } from "vue";
 // import { renderer, animate } from "./components/startup";
 // import { renderer, animate } from "./components/envmap";
-import { renderer, animate } from "./components/points";
+// import { renderer, animate } from "./components/points";
+import { renderer, animate } from "./components/raycaster";
 animate();
 const mapRef = ref();
 onMounted(() => {
