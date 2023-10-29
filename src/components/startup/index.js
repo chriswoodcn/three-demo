@@ -1,20 +1,10 @@
-<!--
- * @Author: chriswoodcn
- * @Email: chriswoodcn@aliyun.com
- * @Date: 2023-10-26 08:06:24
- * @LastEditors: chriswoodcn
- * @LastEditTime: 2023-10-26 12:13:03
- * @Description: startup-1
- * 
- * Copyright (c) 2023 by chriswoodcn, All Rights Reserved. 
--->
-<script setup>
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { onMounted, ref } from "vue";
+
 // 创建场景
 const scene = new THREE.Scene();
-const renderer = new THREE.WebGLRenderer();
+export const renderer = new THREE.WebGLRenderer();
+renderer.castShadow = true;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -32,7 +22,7 @@ camera.position.set(0, 0, 50);
 // 环境光
 const light = new THREE.AmbientLight(0x404040); // 柔和的白光
 scene.add(light);
-// 平行光，强度为 0.5。
+// 平行光，强度为 5。
 const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0);
 directionalLight.position.set(5, 5, 5);
 directionalLight.castShadow = true;
@@ -46,7 +36,7 @@ scene.add(helper);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
 // scene添加mesh
-const boxGeometry = new THREE.SphereGeometry(5, 10, 10);
+const boxGeometry = new THREE.SphereGeometry(5, 30, 30);
 const boxMaterial = new THREE.MeshStandardMaterial({
   color: 0xf5f5f5,
   roughness: 1,
@@ -64,21 +54,8 @@ plane.receiveShadow = true;
 plane.rotateX(-Math.PI / 2);
 scene.add(plane);
 
-function animate() {
+export const animate = function () {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
-}
-
-animate();
-const mapRef = ref();
-onMounted(() => {
-  mapRef.value.appendChild(renderer.domElement);
-});
-</script>
-
-<template>
-  <div ref="mapRef" class="w-full h-full bg-blueGray"></div>
-</template>
-
-<style scoped></style>
+};
