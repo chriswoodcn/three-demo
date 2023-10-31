@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "source": "singleton/page2/index.html",
-
   "scripts": {
     "start": "parcel",
     "buildp": "parcel build",
@@ -18,8 +17,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
+    "cesium": "^1.110.1",
     "parcel": "^2.10.1",
     "unocss": "^0.57.1",
-    "vite": "^4.4.5"
+    "vite": "^4.4.5",
+    "vite-plugin-cesium": "^1.2.22"
   }
 }
