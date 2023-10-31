@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "source": "singleton/page1/index.html",
+  "source": "singleton/page2/index.html",
 
   "scripts": {
     "start": "parcel",
