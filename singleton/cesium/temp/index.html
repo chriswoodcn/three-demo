@@ -13,33 +13,39 @@
         initMap();
       }
 
-      //可编辑线
-      function addPolyline() {
-        var polyline = viewer.entities.add({
-          name: "polyline",
-          polyline: {
-            positions: Cesium.Cartesian3.fromDegreesArray([
-              118.1044813816513, 24.451483144361173, 118.0850887298584,
-              24.439001083374023, 118.0850887298584, 24.469001083374023,
-            ]),
-            width: 10,
-            clampToGround: true,
-            material: new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.2, //一个数字属性，用于指定发光强度，以总线宽的百分比表示。
-              taperPower: 1, //一个数字属性，指定渐缩效果的强度，以总行长的百分比表示。如果为1.0或更高，则不使用锥度效果。
-              color: Cesium.Color.CORNFLOWERBLUE,
-            }),
+      //可编辑矩形
+
+      function addRect() {
+        var west = 118.0850887298584;
+        var south = 24.439001083374023;
+        var east = 118.1044813816513;
+        var north = 24.451483144361173;
+        entity = new Cesium.Entity({
+          name: "rect",
+          rectangle: {
+            coordinates: Cesium.Rectangle.fromDegrees(west, south, east, north),
+            outline: true,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 4,
+            stRotation: Cesium.Math.toRadians(45),
+            material: Cesium.Color.GREENYELLOW.withAlpha(0.5),
           },
         });
+        viewer.entities.add(entity);
       }
 
+      //当前编辑点
       var currentPoint = null;
+      //所有编辑点
       var pointsId = [];
-      var halfPointsId = [];
+      //事件
       var handler = null;
+      //当前编辑事件
       var gon = null;
+      //中心编辑点
+      var centerPoint = null;
 
-      function editPolyline() {
+      function editRect() {
         document.getElementById("map").style.cursor = "pointer";
         //去掉双击事件
         viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(
@@ -54,14 +60,40 @@
           let pickedObject = viewer.scene.pick(windowPosition);
           if (Cesium.defined(pickedObject)) {
             let entity = pickedObject.id;
-            if (entity.name === "polyline" && !isEditting) {
+            if (entity.name === "rect" && !isEditting) {
               gon = entity;
-              // 生成编辑点
-              var cartesianArr = gon.polyline.positions.getValue();
+              // 生成边界编辑点
+              var degrees = gon.rectangle.coordinates.getValue();
+              var cartesianArr = [];
+              var westNorth = Cesium.Cartesian3.fromRadians(
+                degrees.west,
+                degrees.north
+              );
+              westNorth.flag = "westNorth";
+              cartesianArr.push(westNorth);
+              var eastNorth = Cesium.Cartesian3.fromRadians(
+                degrees.east,
+                degrees.north
+              );
+              eastNorth.flag = "eastNorth";
+              cartesianArr.push(eastNorth);
+              var eastSouth = Cesium.Cartesian3.fromRadians(
+                degrees.east,
+                degrees.south
+              );
+              eastSouth.flag = "eastSouth";
+              cartesianArr.push(eastSouth);
+              var westSouth = Cesium.Cartesian3.fromRadians(
+                degrees.west,
+                degrees.south
+              );
+              westSouth.flag = "westSouth";
+              cartesianArr.push(westSouth);
+              console.log("cartesianArr", cartesianArr);
               for (var i = 0; i < cartesianArr.length; i++) {
                 var cartesian = cartesianArr[i];
                 var point = viewer.entities.add({
-                  name: "polyline_point",
+                  name: "rect_point",
                   position: cartesian,
                   point: {
                     color: Cesium.Color.WHITE,
@@ -71,107 +103,42 @@
                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, //贴地
                   },
                 });
+                point.flag = cartesian.flag;
                 pointsId.push(point.id);
               }
-
-              //生成half采集点
-              for (var i = 0; i < cartesianArr.length - 1; i++) {
-                var halfX = (cartesianArr[i].x + cartesianArr[i + 1].x) / 2;
-                var halfY = (cartesianArr[i].y + cartesianArr[i + 1].y) / 2;
-                var halfZ = (cartesianArr[i].z + cartesianArr[i + 1].z) / 2;
-                var cartesian = new Cesium.Cartesian3(halfX, halfY, halfZ);
-                var pointEntity = {
-                  name: "polyline_half_point",
-                  position: cartesian,
-                  point: {
-                    color: Cesium.Color.RED,
-                    pixelSize: 8,
-                    outlineColor: Cesium.Color.BLACK,
-                    outlineWidth: 1,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, //贴地
-                  },
-                };
-                pointEntity.positionFlag = [i, i + 1];
-                var point = viewer.entities.add(pointEntity);
-                halfPointsId.push(point.id);
-              }
-              isEditting = true;
-              viewer.scene.screenSpaceCameraController.enableRotate = false;
-              viewer.scene.screenSpaceCameraController.enableZoom = false;
-            } else if (entity.name === "polyline_point") {
-              currentPoint = entity;
-            } else if (entity.name === "polyline_half_point") {
-              //线半点变线上（点击变颜色）
-              //线上的中心点移动：更新points
-              let ellipsoid = viewer.scene.globe.ellipsoid;
-              let cartesian = viewer.camera.pickEllipsoid(
-                windowPosition,
-                ellipsoid
+              // 生成中心编辑点
+              var centerLng = (degrees.west + degrees.east) / 2;
+              var centerLat = (degrees.north + degrees.south) / 2;
+              var rect_center_cartesian = Cesium.Cartesian3.fromRadians(
+                centerLng,
+                centerLat
               );
-              if (!cartesian) {
-                return;
-              }
-              var entityTemp = {
-                name: "polyline_point",
-                position: cartesian,
+              var pointTemp = viewer.entities.add({
+                name: "rect_point",
+                position: rect_center_cartesian,
                 point: {
-                  color: Cesium.Color.WHITE,
-                  pixelSize: 8,
+                  color: Cesium.Color.RED,
+                  pixelSize: 10,
                   outlineColor: Cesium.Color.BLACK,
                   outlineWidth: 1,
                   heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, //贴地
                 },
-              };
-              var point = viewer.entities.add(entityTemp);
-              currentPoint = point;
-              //线半点变成线上点
-              pointsId.splice(entity.positionFlag[0] + 1, 0, point.id);
-              //删除所有线半点
-              for (var i = 0; i < halfPointsId.length; i++) {
-                viewer.entities.remove(
-                  viewer.entities.getById(halfPointsId[i])
-                );
-              }
-              halfPointsId = [];
-              //重新生成所有线半点
-              //console.log("pointsId",pointsId);
-              for (var i = 0; i < pointsId.length - 1; i++) {
-                var oneTemp = viewer.entities.getById(pointsId[i]).position
-                  ._value;
-                var twoTemp = viewer.entities.getById(pointsId[i + 1]).position
-                  ._value;
-                var halfX = (oneTemp.x + twoTemp.x) / 2;
-                var halfY = (oneTemp.y + twoTemp.y) / 2;
-                var halfZ = (oneTemp.z + twoTemp.z) / 2;
-                var cartesianHalf = new Cesium.Cartesian3(halfX, halfY, halfZ);
-                var pointEntity = {
-                  name: "polyline_half_point",
-                  position: cartesianHalf,
-                  point: {
-                    color: Cesium.Color.RED,
-                    pixelSize: 8,
-                    outlineColor: Cesium.Color.BLACK,
-                    outlineWidth: 1,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, //贴地
-                  },
-                };
-                pointEntity.positionFlag = [i, i + 1];
-                var point = viewer.entities.add(pointEntity);
-                halfPointsId.push(point.id);
-              }
+              });
+              pointTemp.flag = "center";
+              pointsId.push(pointTemp.id);
+
+              isEditting = true;
+              viewer.scene.screenSpaceCameraController.enableRotate = false;
+              viewer.scene.screenSpaceCameraController.enableZoom = false;
+            } else if (entity.name === "rect_point") {
+              currentPoint = entity;
             }
           }
         }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
 
         // 对鼠标移动事件的监听
         handler.setInputAction((event) => {
-          //console.log("currentPoint11",currentPoint);
-          if (
-            isEditting &&
-            currentPoint &&
-            currentPoint.name == "polyline_point"
-          ) {
-            //线上的点
+          if (isEditting && currentPoint && currentPoint.name == "rect_point") {
             //获取加载地形后对应的经纬度和高程：地标坐标
             var ray = viewer.camera.getPickRay(event.endPosition);
             var cartesian = viewer.scene.globe.pick(ray, viewer.scene);
@@ -179,38 +146,157 @@
             if (!cartesian) {
               return;
             }
+            //更新当前点的位置
             currentPoint.position = cartesian;
             for (var i = 0; i < pointsId.length; i++) {
               if (currentPoint.id == pointsId[i]) {
-                points.push(currentPoint.position._value);
+                var objTemp = currentPoint.position._value;
+                objTemp.flag = currentPoint.flag;
+                points.push(objTemp);
               } else {
                 var id = pointsId[i];
-                points.push(viewer.entities.getById(id).position._value);
+                var objTemp = viewer.entities.getById(id).position._value;
+                objTemp.flag = viewer.entities.getById(id).flag;
+                points.push(objTemp);
               }
             }
-            gon.polyline.positions = new Cesium.CallbackProperty(function (
-              time,
-              result
+            if (typeof currentPoint == "undefined") {
+              var radians = Cesium.Rectangle.fromDegrees(
+                west,
+                south,
+                east,
+                north
+              );
+              return radians;
+            }
+            //当前移动是哪个点，获取新的矩形边界
+            var ellipsoid = viewer.scene.globe.ellipsoid;
+            var lngArr = [];
+            var latArr = [];
+            if (
+              currentPoint.flag == "westNorth" ||
+              currentPoint.flag == "eastSouth"
             ) {
-              //更新线上中心点位置信息
-              for (var i = 0; i < halfPointsId.length; i++) {
-                var entityTemp = viewer.entities.getById(halfPointsId[i]);
-                if (typeof entityTemp != "undefined") {
-                  var oneTemp = entityTemp.positionFlag[0];
-                  var twoTemp = entityTemp.positionFlag[1];
-                  if (
-                    typeof points[oneTemp] != "undefined" &&
-                    typeof points[twoTemp] != "undefined"
-                  ) {
-                    var halfX = (points[oneTemp].x + points[twoTemp].x) / 2;
-                    var halfY = (points[oneTemp].y + points[twoTemp].y) / 2;
-                    var halfZ = (points[oneTemp].z + points[twoTemp].z) / 2;
-                    var cartesian = new Cesium.Cartesian3(halfX, halfY, halfZ);
-                    entityTemp.position = cartesian;
+              for (var i = 0; i < points.length; i++) {
+                if (
+                  points[i].flag == "westNorth" ||
+                  points[i].flag == "eastSouth"
+                ) {
+                  var cartographic = ellipsoid.cartesianToCartographic(
+                    points[i]
+                  );
+                  var lng = Cesium.Math.toDegrees(cartographic.longitude);
+                  var lat = Cesium.Math.toDegrees(cartographic.latitude);
+                  lngArr.push(lng);
+                  latArr.push(lat);
+                }
+              }
+            } else if (
+              currentPoint.flag == "eastNorth" ||
+              currentPoint.flag == "westSouth"
+            ) {
+              for (var i = 0; i < points.length; i++) {
+                if (
+                  points[i].flag == "eastNorth" ||
+                  points[i].flag == "westSouth"
+                ) {
+                  var cartographic = ellipsoid.cartesianToCartographic(
+                    points[i]
+                  );
+                  var lng = Cesium.Math.toDegrees(cartographic.longitude);
+                  var lat = Cesium.Math.toDegrees(cartographic.latitude);
+                  lngArr.push(lng);
+                  latArr.push(lat);
+                }
+              }
+            } else if (currentPoint.flag == "center") {
+              var cartographic = ellipsoid.cartesianToCartographic(
+                currentPoint.position._value
+              );
+              var centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+              var centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+              //console.log("centerLng",centerLng);
+              var rectInfo = gon.rectangle.coordinates.getValue();
+              //console.log("currentPoint.position",currentPoint.position._value);
+              var rectWidth =
+                Cesium.Math.toDegrees(rectInfo.east) -
+                Cesium.Math.toDegrees(rectInfo.west);
+              var rectHeight =
+                Cesium.Math.toDegrees(rectInfo.north) -
+                Cesium.Math.toDegrees(rectInfo.south);
+              //console.log("rectWidth:",rectWidth);
+              var rectInfoEast = centerLng + rectWidth / 2;
+              lngArr.push(rectInfoEast);
+              var rectInfoWest = centerLng - rectWidth / 2;
+              lngArr.push(rectInfoWest);
+              var rectInfoNorth = centerLat + rectHeight / 2;
+              latArr.push(rectInfoNorth);
+              var rectInfoSouth = centerLat - rectHeight / 2;
+              latArr.push(rectInfoSouth);
+              //console.log("rectInfoEast",rectInfoEast);
+              //console.log("经度组：",lngArr);
+            }
+            var east = Math.max.apply(null, lngArr);
+            var west = Math.min.apply(null, lngArr);
+            var north = Math.max.apply(null, latArr);
+            var south = Math.min.apply(null, latArr);
+            //更新所有编辑点的位置
+            for (var i = 0; i < pointsId.length; i++) {
+              var id = pointsId[i];
+              var entityTemp = viewer.entities.getById(id);
+              if (
+                typeof entityTemp != "undefined" &&
+                typeof currentPoint != "undefined"
+              ) {
+                if (entityTemp.flag != currentPoint.flag) {
+                  if (entityTemp.flag == "westNorth") {
+                    entityTemp.position = Cesium.Cartesian3.fromDegrees(
+                      west,
+                      north
+                    );
+                  } else if (entityTemp.flag == "eastNorth") {
+                    entityTemp.position = Cesium.Cartesian3.fromDegrees(
+                      east,
+                      north
+                    );
+                  } else if (entityTemp.flag == "eastSouth") {
+                    entityTemp.position = Cesium.Cartesian3.fromDegrees(
+                      east,
+                      south
+                    );
+                  } else if (entityTemp.flag == "westSouth") {
+                    entityTemp.position = Cesium.Cartesian3.fromDegrees(
+                      west,
+                      south
+                    );
+                  } else if (entityTemp.flag == "center") {
+                    var centerLng = (west + east) / 2;
+                    var centerLat = (north + south) / 2;
+                    entityTemp.position = Cesium.Cartesian3.fromDegrees(
+                      centerLng,
+                      centerLat
+                    );
                   }
                 }
               }
-              return points;
+            }
+            //console.log("坐标：",west, south, east, north);
+            if (west >= east || south >= north) {
+              currentPoint = undefined;
+              return;
+            }
+            var radians = Cesium.Rectangle.fromDegrees(
+              west,
+              south,
+              east,
+              north
+            );
+            //更新矩形位置
+            gon.rectangle.coordinates = new Cesium.CallbackProperty(function (
+              time,
+              result
+            ) {
+              return radians;
             },
             false);
           }
@@ -223,7 +309,7 @@
         }, Cesium.ScreenSpaceEventType.LEFT_UP);
       }
 
-      function endEditPolyline() {
+      function endEditRect() {
         viewer.scene.screenSpaceCameraController.enableRotate = true;
         viewer.scene.screenSpaceCameraController.enableZoom = true;
         if (handler !== null && !handler.isDestroyed()) {
@@ -234,26 +320,15 @@
         }
         pointsId = [];
 
-        for (let id of halfPointsId) {
-          viewer.entities.removeById(id);
-        }
-        halfPointsId = [];
-
-        var dke = gon.polyline.positions.getValue();
+        var dke = gon.rectangle.coordinates.getValue();
         console.log("修改后的面坐标(笛卡尔)：", dke);
-        var objArr = [];
-        for (var i = 0; i < dke.length; i++) {
-          var ellipsoid = viewer.scene.globe.ellipsoid;
-          var cartesian3 = new Cesium.Cartesian3(dke[i].x, dke[i].y, dke[i].z);
-          var cartographic = ellipsoid.cartesianToCartographic(cartesian3);
-          //console.log("cartographic",cartographic);
-          var obj = {};
-          obj.lat = Cesium.Math.toDegrees(cartographic.latitude);
-          obj.lng = Cesium.Math.toDegrees(cartographic.longitude);
-          obj.alt = cartographic.height;
-          objArr.push(obj);
-        }
-        console.log("修改后的面坐标(经纬度)", objArr);
+
+        var east = Cesium.Math.toDegrees(dke.east);
+        var west = Cesium.Math.toDegrees(dke.west);
+        var north = Cesium.Math.toDegrees(dke.north);
+        var south = Cesium.Math.toDegrees(dke.south);
+        console.log("矩形西南东北坐标:", west, south, east, north);
+
         gon = null;
         //鼠标变成默认
         document.getElementById("map").style.cursor = "default";
@@ -263,8 +338,8 @@
   <body onload="load()">
     <input
       type="button"
-      onclick="addPolyline();"
-      value="添加可编辑线"
+      onclick="addRect();"
+      value="添加可编辑矩形"
       style="
         position: absolute;
         left: 50px;
@@ -277,8 +352,8 @@
     />
     <input
       type="button"
-      onclick="editPolyline();"
-      value="鼠标选中可编辑线进入编辑"
+      onclick="editRect();"
+      value="鼠标选中可编辑矩形进入编辑"
       style="
         position: absolute;
         left: 50px;
@@ -291,8 +366,8 @@
     />
     <input
       type="button"
-      onclick="endEditPolyline();"
-      value="可编辑线结束编辑"
+      onclick="endEditRect();"
+      value="可编辑矩形结束编辑"
       style="
         position: absolute;
         left: 50px;
