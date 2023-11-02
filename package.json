@@ -3,9 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "source": "singleton/three/page1/index.html",
+  "source": "singleton/three/003-shader/index.html",
+
   "scripts": {
-    "start": "parcel",
+    "startp": "parcel",
     "buildp": "parcel build",
     "dev": "vite",
     "build": "vite build",
@@ -17,6 +18,7 @@
     "vue": "^3.3.4"
   },
   "devDependencies": {
+    "@parcel/transformer-glsl": "^2.10.1",
     "@vitejs/plugin-vue": "^4.2.3",
     "assert": "^2.1.0",
     "browserify-zlib": "^0.2.0",

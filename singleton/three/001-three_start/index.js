@@ -71,9 +71,7 @@ const params = {
 let galaxyGeometry, galaxyMaterial, galaxyPoints;
 function createGalaxy2() {
   const textureLoader = new THREE.TextureLoader();
-  const pointsTexture = textureLoader.load(
-    "../../public/assets/points/star.png"
-  );
+  const pointsTexture = textureLoader.load("assets/points/star.png");
   const positions = new Float32Array(params.count * 3);
   const colors = new Float32Array(params.count * 3);
   const centerColor = new THREE.Color(params.color);
@@ -117,9 +115,10 @@ function createGalaxy2() {
   );
   galaxyGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   galaxyMaterial = new THREE.PointsMaterial({
-    color: new THREE.Color(params.color),
+    // color: new THREE.Color(params.color),
     size: params.size,
     sizeAttenuation: true,
+    texture: pointsTexture,
   });
   galaxyPoints = new THREE.Points(galaxyGeometry, galaxyMaterial);
   galaxyPoints.position.setY(-30);
