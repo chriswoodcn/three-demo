@@ -398,7 +398,7 @@ function endEditRect() {
     viewer.entities.removeById(id);
   }
   pointsId = [];
-
+  if (gon == null) return;
   var dke = gon.rectangle.coordinates.getValue();
   console.log("修改后的面坐标(笛卡尔)：", dke);
 

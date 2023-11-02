@@ -6,7 +6,8 @@ import "virtual:uno.css";
 // import App from "./cesium/002-gather_point/App.vue";
 // import App from "./cesium/003-gather_polyline/App.vue";
 // import App from "./cesium/004-gather_polygon/App.vue";
-import App from "./cesium/005-gather_rect/App.vue";
+// import App from "./cesium/005-gather_rect/App.vue";
+import App from "./cesium/006-gather_ellipse/App.vue";
 // Register Components
 import { registerGlobalComponents } from "./components";
 
