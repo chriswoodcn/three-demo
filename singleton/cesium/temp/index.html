@@ -1,1 +1,44 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <script src="Build/CesiumUnminified/Cesium.js"></script>
+    <link rel="stylesheet" href="Build/Cesium/Widgets/widgets.css">
+    <script src="initMap.js"></script>
+    <script>
+        //在initMap.js进行初始化
+        var viewer = null;
+
+        function load() {
+            console.log("地图初始化");
+            initMap();//地图初始化
+            loadPhoto();
+        }
+        //加载倾斜摄影
+        function loadPhoto(){
+            var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+                url: 'http://10.254.10.38/baoli3dtile/tileset.json',
+                maximumMemoryUsage: 100,//不可设置太高，目标机子空闲内存值以内，防止浏览器过于卡
+                maximumScreenSpaceError: 20,//用于驱动细节细化级别的最大屏幕空间错误;较高的值可提供更好的性能，但视觉质量较低。
+                maximumNumberOfLoadedTiles: 1000,  //最大加载瓦片个数
+                shadows: false,//是否显示阴影
+                skipLevelOfDetail: true,
+                baseScreenSpaceError: 1024,
+                skipScreenSpaceErrorFactor: 16,
+                skipLevels: 1,
+                immediatelyLoadDesiredLevelOfDetail: false,
+                loadSiblings: false,
+                cullWithChildrenBounds: true,
+                dynamicScreenSpaceError: true,
+                dynamicScreenSpaceErrorDensity: 0.00278,
+                dynamicScreenSpaceErrorFactor: 4.0,
+                dynamicScreenSpaceErrorHeightFalloff: 0.25
+            }));
+            viewer.scene.primitives.add(tileset);
+        }
+    </script>
+</head>
+<body onload="load()">
+<div id="map" style='z-index:100;position: absolute;top: 0; bottom: 0;right: 0;left: 0;'></div>
+</body>
+</html>
 
