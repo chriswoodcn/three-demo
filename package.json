@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "source": "singleton/three/003-shader/index.html",
+  "source": "singleton/three/004-shader_pro/index.html",
 
   "scripts": {
     "startp": "parcel",
