@@ -61,6 +61,8 @@ const initMap = async () => {
     );
     viewer.scene.primitives.add(tileset);
     viewer.zoomTo(tileset);
+    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 10;
   } catch (error) {
     console.log(`Error loading tileset: ${error}`);
   }
