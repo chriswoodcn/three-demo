@@ -9,12 +9,12 @@ const mapRef = ref();
 var viewer;
 const initMap = async () => {
   viewer = new Cesium.Viewer("cesiumContainer", {
-    // terrain: Cesium.Terrain.fromWorldTerrain(),
+    terrain: Cesium.Terrain.fromWorldTerrain(),
   });
   //去除版权信息
   viewer._cesiumWidget._creditContainer.style.display = "none";
   try {
-    // const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(40866);
+    // const tileset0 = await Cesium.Cesium3DTileset.fromIonAssetId(40866);
     // var tileset = viewer.scene.primitives.add(
     //   new Cesium.Cesium3DTileset({
     //     url: "https://assets.ion.cesium.com/ap-northeast-1/40866/tileset.json",
@@ -38,7 +38,8 @@ const initMap = async () => {
     const tileset = await Cesium.Cesium3DTileset.fromUrl(
       // "http://localhost:8003/1.0/TilesetWithDiscreteLOD/tileset.json",
       // "http://localhost:8003/1.0/TilesetWithTreeBillboards/tileset.json",
-      "http://localhost:8003/1.0/TilesetWithRequestVolume/tileset.json",
+      // "http://localhost:8003/1.0/TilesetWithRequestVolume/tileset.json",
+      "http://localhost:8003/1.0/40866/tileset.json",
       {
         debugShowBoundingVolume: true,
         maximumMemoryUsage: 100, //不可设置太高，目标机子空闲内存值以内，防止浏览器过于卡
