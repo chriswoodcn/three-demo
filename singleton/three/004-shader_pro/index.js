@@ -68,7 +68,7 @@ function animate() {
 animate();
 window.addEventListener("mousemove", function (e) {
   material.uniforms.uMouse.value.x = e.clientX;
-  console.log("x: " + e.clientX / window.innerWidth);
+  // console.log("x: " + e.clientX / window.innerWidth);
   material.uniforms.uMouse.value.y = e.clientY;
-  console.log("y: " + e.clientY / window.innerHeight);
+  // console.log("y: " + e.clientY / window.innerHeight);
 });

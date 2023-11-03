@@ -48,5 +48,6 @@ void main() {
     vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), uv.y);
     // 等同于下面的写法
     // vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(uv.y, uv.y, uv.y));
-    gl_FragColor = vec4(color, 1.0);
+    float stren = (sin(uTime*10.0) + 1.1)/2.0;
+    gl_FragColor = vec4(color, stren);
 }

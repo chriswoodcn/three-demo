@@ -63,6 +63,20 @@ const initMap = async () => {
     viewer.zoomTo(tileset);
     viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
     viewer.scene.screenSpaceCameraController.minimumZoomDistance = 10;
+    // 地图清晰度优化
+    viewer._cesiumWidget._supportsImageRenderingPixelated =
+      Cesium.FeatureDetection.supportsImageRenderingPixelated();
+    viewer._cesiumWidget._forceResize = true;
+    if (Cesium.FeatureDetection.supportsImageRenderingPixelated()) {
+      var vtxf_dpr = window.devicePixelRatio;
+      console.log("vtxf_dpr: ", vtxf_dpr);
+      // 适度降低分辨率
+      while (vtxf_dpr >= 2.0) {
+        vtxf_dpr /= 2.0;
+      }
+      //alert(dpr);
+      viewer.resolutionScale = vtxf_dpr;
+    }
   } catch (error) {
     console.log(`Error loading tileset: ${error}`);
   }
