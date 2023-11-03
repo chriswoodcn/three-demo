@@ -27,6 +27,23 @@ const material = new THREE.RawShaderMaterial({
   fragmentShader: RawFragmentShader,
   // wireframe: true,
   side: THREE.DoubleSide,
+  uniforms: {
+    uTime: {
+      value: 0,
+    },
+    uMouse: {
+      value: {
+        x: 0.0,
+        y: 0.0,
+      },
+    },
+    uWindow: {
+      value: {
+        x: window.innerWidth,
+        y: window.innerHeight,
+      },
+    },
+  },
 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 64, 64), material);
 scene.add(floor);
@@ -44,7 +61,14 @@ function animate() {
   let delta = clock.getDelta();
   let elapsed = clock.getElapsedTime();
   // console.log("间隔时间:" + delta);
+  material.uniforms.uTime.value = elapsed;
   camera.updateProjectionMatrix();
   renderer.render(scene, camera);
 }
 animate();
+window.addEventListener("mousemove", function (e) {
+  material.uniforms.uMouse.value.x = e.clientX;
+  console.log("x: " + e.clientX / window.innerWidth);
+  material.uniforms.uMouse.value.y = e.clientY;
+  console.log("y: " + e.clientY / window.innerHeight);
+});
