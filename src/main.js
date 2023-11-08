@@ -3,7 +3,7 @@
  * @Email: chriswoodcn@aliyun.com
  * @Date: 2023-11-02 19:18:05
  * @LastEditors: chriswoodcn
- * @LastEditTime: 2023-11-08 07:04:07
+ * @LastEditTime: 2023-11-08 16:29:41
  * @FilePath: \three-demo\src\main.js
  * @Description: 
  * Copyright (c) 2023 by chriswoodcn, All Rights Reserved. 
@@ -21,7 +21,8 @@ import "virtual:uno.css";
 // import App from "./cesium/007-theme/App.vue";
 // import App from "./cesium/008-3d_tile/App.vue";
 // import App from "./cesium/009-3d_tile_adjust/App.vue";
-import App from "./cesium/010-offline_terrian/App.vue";
+// import App from "./cesium/010-offline_terrian/App.vue";
+import App from "./cesium/011-osm_building/App.vue";
 // Register Components
 import { registerGlobalComponents } from "./components";
 
