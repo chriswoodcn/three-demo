@@ -7,22 +7,36 @@ import { ref, onMounted } from "vue";
 const mapRef = ref();
 /**@type Cesium.Viewer */
 var viewer;
+var worldTerrainProvider;
 
-const initMap = () => {
+const initMap = async () => {
   //在线调用需要token
   // Cesium.Ion.defaultAccessToken =
   //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4YjUxM2U0Yi01NjQ4LTQ3OGItYTRkNC03YzViMDBiYjJmZDUiLCJpZCI6MTc1MjExLCJpYXQiOjE2OTg3OTI2NTF9.c0r5dGsd-fmp7_nNQTjcf4fEyI2ekPmbaxxCfU9kAh4";
-  viewer = new Cesium.Viewer("cesiumContainer", {
-    terrain: Cesium.Terrain.fromWorldTerrain(),
+  const osmImageryProvider = new Cesium.OpenStreetMapImageryProvider({
+    url: "https://tile.openstreetmap.org/",
   });
+  viewer = new Cesium.Viewer("cesiumContainer", {
+    baseLayerPicker: false, //是否显示图层选择器
+    baseLayer: false,
+  });
+  worldTerrainProvider = await Cesium.createWorldTerrainAsync();
+  viewer.scene.terrainProvider = worldTerrainProvider;
+  viewer.imageryLayers.addImageryProvider(osmImageryProvider);
   //优化项--关闭相关特效
   viewer.scene.debugShowFramesPerSecond = true; //显示fps
-  viewer.scene.moon.show = false; //月亮
-  viewer.scene.fog.enabled = false; //雾
-  viewer.scene.sun.show = false; //太阳
   load3Dbuild();
   //去除版权信息
   viewer._cesiumWidget._creditContainer.style.display = "none";
+  var obj = {
+    lng: 121.498,
+    lat: 31.2418,
+    eyeHeight: 3000,
+    pitch: -30,
+    heading: 87.0,
+    time: 1,
+  };
+  viewerFlyToLonLat(obj);
 };
 const load3Dbuild = async () => {
   console.log("js地图初始化完成,地图对象:", viewer);
@@ -49,7 +63,7 @@ const load3Dbuild = async () => {
             // stc_a13 = abs(stc_a13 - 0.5) * 2.0;
             // float stc_diff = step(0.005, abs(stc_h - stc_a13));// 根据时间来计算颜色差异
             // gl_FragColor.rgb += gl_FragColor.rgb * (1.0 - stc_diff);// 原有颜色加上颜色差异值提高亮度
-            
+
             /* 渐变效果 */
             vec4 v_helsing_position = czm_inverseModelView * vec4(fsInput.attributes.positionEC,1);
             float stc_pl = fract(czm_frameNumber / 120.0) * 3.14159265 * 2.0;
@@ -57,81 +71,17 @@ const load3Dbuild = async () => {
             material.diffuse = vec3(0, 0.2, 1.0);// 基础颜色
             material.diffuse *= vec3(stc_sd, stc_sd, stc_sd);
             /* 扫描线 */
-            float glowRange = 360.0; // 光环的移动范围(高度)，最高到360米
-            float stc_a13 = fract(czm_frameNumber / 360.0);// 计算当前着色器的时间，帧率/（6*60），即时间放慢6倍
+            float glowRange = 250.0; // 光环的移动范围(高度)，最高到360米
+            float stc_a13 = fract(czm_frameNumber / 180.0);// 计算当前着色器的时间，帧率/（6*60），即时间放慢6倍
             float stc_h = clamp(v_helsing_position.z / glowRange, 0.0, 1.0);
             stc_a13 = abs(stc_a13 - 0.5) * 2.0;
             float stc_diff = step(0.005, abs(stc_h - stc_a13));// 根据时间来计算颜色差异
             material.diffuse += material.diffuse * (1.0 - stc_diff);// 原有颜色加上颜色差异值提高亮度
-
         }
         `,
     }),
   });
   var city = viewer.scene.primitives.add(tileset);
-  var obj = {
-    lng: 121.498,
-    lat: 31.2418,
-    eyeHeight: 3000,
-    pitch: -30,
-    heading: 87.0,
-    time: 1,
-  };
-  viewerFlyToLonLat(obj);
-  // let r = tileset.boundingSphere.radius
-  // if (tileset.boundingSphere.radius > 10000) {
-  //   r = tileset.boundingSphere.radius / 10
-  // }
-  //viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0.0, -0.5, r))
-  // tileset.style = new Cesium.Cesium3DTileStyle({
-  //   color: 'vec4(0, 0.2, 1.0,1)'
-  // })
-  // // 注入 shader
-  // tileset.tileVisible.addEventListener((tile) => {
-  //   // console.log("tile:",tile);
-  //   var content = tile.content
-  //   var featuresLength = content.featuresLength
-  //   for (var i = 0; i < featuresLength; i += 2) {
-  //     const feature = content.getFeature(i)
-  //     const model = feature.content._model
-  //     console.log("model", model);
-  //     if (model && model._sourcePrograms && model._rendererResources) {
-  //       Object.keys(model._sourcePrograms).forEach((key) => {
-  //         //console.log("key",key);
-  //         const program = model._sourcePrograms[key]
-  //         const fragmentShader = model._rendererResources.sourceShaders[program.fragmentShader]
-  //         let vPosition = ''
-  //         if (fragmentShader.indexOf(' v_positionEC;') !== -1) {
-  //           vPosition = 'v_positionEC'
-  //         } else if (fragmentShader.indexOf(' v_pos;') !== -1) {
-  //           vPosition = 'v_pos'
-  //         }
-  //         const color = `vec4(${feature.color.toString()})`
-  //         // 自定义着色器
-  //         model._rendererResources.sourceShaders[program.fragmentShader] = `
-  // 				  varying vec3 ${vPosition};// 相机坐标系的模型坐标
-  // 				  void main(void){
-  // 					/* 渐变效果 */
-  // 					vec4 v_helsing_position = czm_inverseModelView * vec4(${vPosition},1);// 解算出模型坐标
-  // 					float stc_pl = fract(czm_frameNumber / 120.0) * 3.14159265 * 2.0;
-  // 					float stc_sd = v_helsing_position.z / 60.0 + sin(stc_pl) * 0.1;
-  // 					gl_FragColor = ${color};// 基础颜色
-  // 					gl_FragColor *= vec4(stc_sd, stc_sd, stc_sd, 1.0);// 按模型高度进行颜色变暗处理
-  // 					/* 扫描线 */
-  // 					float glowRange = 250.0; // 光环的移动范围(高度)，最高到360米
-  // 					float stc_a13 = fract(czm_frameNumber / 360.0);// 计算当前着色器的时间，帧率/（6*60），即时间放慢6倍
-  // 					float stc_h = clamp(v_helsing_position.z / glowRange, 0.0, 1.0);
-  // 					stc_a13 = abs(stc_a13 - 0.5) * 2.0;
-  // 					float stc_diff = step(0.005, abs(stc_h - stc_a13));// 根据时间来计算颜色差异
-  // 					gl_FragColor.rgb += gl_FragColor.rgb * (1.0 - stc_diff);// 原有颜色加上颜色差异值提高亮度
-  // 				  }
-  // 				`
-  //       })
-  //       // 让系统重新编译着色器
-  //       model._shouldRegenerateShaders = true
-  //     }
-  //   }
-  // })
 };
 var flyToEntity = null;
 function viewerFlyToLonLat(obj) {

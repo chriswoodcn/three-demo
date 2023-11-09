@@ -1,0 +1,63 @@
+<!--
+ * @Author: chriswoodcn
+ * @Email: chriswoodcn@aliyun.com
+ * @Date: 2023-11-09 09:34:54
+ * @LastEditors: chriswoodcn
+ * @LastEditTime: 2023-11-09 13:03:22
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by chriswoodcn, All Rights Reserved. 
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Display a web map</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <!-- 引入在线mapbox-gl css样式 -->
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <!-- 引入在线mapbox-gl js库 -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js"></script>
+
+    <!-- 自定义CSS样式 -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map-container {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map-container"></div>
+
+    <script>
+      // token
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoieGlhb3NoaWhkIiwiYSI6ImNrNngzYnRhdzBqNm0zZnJ4eWZjdndrYzkifQ.qQjf8zANr9PsMpwq2NsRWQ";
+
+      const map = new mapboxgl.Map({
+        container: "map-container", // 存放地图的容器id
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        // style: "mapbox://styles/mapbox/streets-v12",
+        style: "http://localhost:8003/osm_liberty.json",
+        center: [100.9, 34.2], // 地图中心位置经纬度[longitude,latitude]
+        zoom: 2.5, // 地图缩放等级
+        projection: "globe", // 投影方式，默认 'globe'
+      });
+    </script>
+  </body>
+</html>
