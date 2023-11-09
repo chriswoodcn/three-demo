@@ -1,0 +1,266 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <script src="Build/CesiumUnminified/Cesium.js"></script>
+    <link rel="stylesheet" href="Build/Cesium/Widgets/widgets.css">
+	<script src="Build/drawHelper/algorithm.js"></script>
+	<script src="Build/drawHelper/plotUtil.js"></script>
+    <script src="initMap.js"></script>
+    <script>
+        //在initMap.js进行初始化
+        var viewer=null;
+
+    var gatherPosition=[];//采集的点信息
+    var floatingPoint=null;//移动点
+    var drawHandler=null;//画事件
+    var layerId="attackArrowLayer";
+	function load(){
+		//初始化地图
+		initMap();
+		//定位
+        var obj = {lng:118.0850887298584, lat: 24.439001083374023,eyeHeight:10000,pitch:-50,heading:0.0,time:1};
+        viewerFlyToLonLat(obj);
+	}
+
+    function gatherAttackArrow(){
+      console.log("攻击箭头");
+      gatherPosition=[];
+      floatingPoint=null;
+      clearPlot();
+      drawHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      drawHandler.setInputAction(function (event) {
+        var position = event.position;
+        if (!Cesium.defined(position)) {
+          return;
+        }
+        var ray = viewer.camera.getPickRay(position);
+        if (!Cesium.defined(ray)) {
+          return;
+        }
+        var cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+        if (!Cesium.defined(cartesian)) {
+          return;
+        }
+        //console.log("点击地图采集的点：",cartesian);
+        var num = gatherPosition.length;
+        if (num == 0) {
+          gatherPosition.push(cartesian);
+          floatingPoint = createPoint(cartesian, -1);
+          showRegion2Map();
+        }
+        gatherPosition.push(cartesian);
+        var oid = gatherPosition.length - 2;
+        createPoint(cartesian, oid);
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      drawHandler.setInputAction(function (event) {
+        var position = event.endPosition;
+        if (!Cesium.defined(position)) {
+          return;
+        }
+        var ray = viewer.camera.getPickRay(position);
+        if (!Cesium.defined(ray)) {
+          return;
+        }
+        var cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+        if (!Cesium.defined(cartesian)) {
+          return;
+        }
+        if(floatingPoint==null){
+          return;
+        }
+        floatingPoint.position.setValue(cartesian);
+        gatherPosition.pop();
+        gatherPosition.push(cartesian);
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+      //右击停止采集
+      drawHandler.setInputAction(function (movement) {
+        if (gatherPosition.length < 2) {
+          return;
+        }
+        gatherPosition.pop();
+        viewer.entities.remove(floatingPoint);
+        //去掉事件
+        if(drawHandler){
+          drawHandler.destroy();
+          drawHandler=null;
+        }
+        //删除关键点
+        clearKeyPoint();
+		getAttackArrowValue();
+      }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    }
+
+    //创建关键点
+    function createPoint(cartesian, oid) {
+      var point = viewer.entities.add({
+        position: cartesian,
+        billboard: {
+          image: "./images/gatherPoint.png",
+          eyeOffset: new Cesium.ConstantProperty(new Cesium.Cartesian3(0, 0, -500)),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+        }
+      });
+      point.oid = oid;
+      point.layerId = layerId;
+      point.flag = "keypoint";
+      return point;
+    };
+
+    function showRegion2Map() {
+      var material= Cesium.Color.fromCssColorString('#ff0').withAlpha(0.5);
+      var outlineMaterial = new Cesium.PolylineDashMaterialProperty({
+        dashLength: 16,
+        color: Cesium.Color.fromCssColorString('#f00').withAlpha(0.7)
+      });
+
+      var dynamicHierarchy = new Cesium.CallbackProperty(function () {
+        if (gatherPosition.length > 1) {
+          var lonLats = getLonLatArr(gatherPosition);
+          var doubleArrow = xp.algorithm.tailedAttackArrow(lonLats);
+          var positions = doubleArrow.polygonalPoint;
+          if (positions == null || positions.length < 3) {
+            return null;
+          }
+          var pHierarchy = new Cesium.PolygonHierarchy(positions);
+          pHierarchy.keyPoints=lonLats;
+          return pHierarchy;
+        } else {
+          return null;
+        }
+      }, false);
+      var outlineDynamicPositions = new Cesium.CallbackProperty(function () {
+        if (gatherPosition.length < 2) {
+          return null;
+        }
+        var lonLats = getLonLatArr(gatherPosition);
+        //console.log("关键点lonLats：",lonLats);
+        var doubleArrow = xp.algorithm.tailedAttackArrow(lonLats);
+        var positions = doubleArrow.polygonalPoint;
+        if (positions == null || positions.length < 3) {
+          return null;
+        }
+        var firstPoint = positions[0];
+        positions.push(firstPoint);
+        return positions;
+      }, false);
+      var bData = {
+        polygon: new Cesium.PolygonGraphics({
+          hierarchy: dynamicHierarchy,
+          material: material,
+          show: true
+        }),
+        polyline: {
+          positions: outlineDynamicPositions,
+          clampToGround: true,
+          width: 2,
+          material: outlineMaterial,
+          show: true
+        }
+      };
+      var entity = viewer.entities.add(bData);
+      entity.layerId = layerId;
+      entity.valueFlag="value";
+    }
+
+    //笛卡尔转经纬度
+    function getLonLatArr(positions) {
+      var arr = [];
+      for (var i = 0; i < positions.length; i++) {
+        var p = getLonLat(positions[i]);
+        if (p != null) {
+          arr.push([p.lon, p.lat]);
+        }
+      }
+      return arr;
+    }
+
+    /**
+     * 笛卡尔坐标转经纬度坐标
+     */
+    function getLonLat(cartesian) {
+      var cartographic =  viewer.scene.globe.ellipsoid.cartesianToCartographic(cartesian);
+      cartographic.height = viewer.scene.globe.getHeight(cartographic);
+      var pos = {
+        lon: cartographic.longitude,
+        lat: cartographic.latitude,
+        alt: cartographic.height
+      };
+      pos.lon = Cesium.Math.toDegrees(pos.lon);
+      pos.lat = Cesium.Math.toDegrees(pos.lat);
+      return pos;
+    }
+
+
+    /**
+     * 删除攻击箭头
+     */
+    function clearPlot(){
+      var entityList = viewer.entities.values;
+      if (entityList == null || entityList.length < 1){
+        return;
+      }
+      for (var i = 0; i < entityList.length; i++) {
+        var entity = entityList[i];
+        if (entity.layerId == layerId) {
+          viewer.entities.remove(entity);
+          i--;
+        }
+      }
+    }
+
+    /**
+     * 删除关键点
+     */
+    function clearKeyPoint(){
+      var entityList = viewer.entities.values;
+      if (entityList == null || entityList.length < 1){
+        return;
+      }
+      for (var i = 0; i < entityList.length; i++) {
+        var entity = entityList[i];
+        if(entity.flag=="keypoint"){
+          viewer.entities.remove(entity);
+          i--;
+        }
+      }
+    }
+    /**
+     * 获取采集的直线箭头数据
+     */
+    function getAttackArrowValue(){
+
+      var entityList = viewer.entities.values;
+      for (var i = 0; i < entityList.length; i++) {
+        var entity = entityList[i];
+        if(typeof (entity.valueFlag)!="undefined"){
+          console.log("采集的攻击箭头(笛卡尔)：",entity.polygon.hierarchy.getValue().positions);
+          var dke=entity.polygon.hierarchy.getValue().positions;
+          var objArr=[];
+          for(var i=0;i<dke.length;i++){
+            var ellipsoid=viewer.scene.globe.ellipsoid;
+            var cartesian3=new Cesium.Cartesian3(dke[i].x,dke[i].y,dke[i].z);
+            var cartographic=ellipsoid.cartesianToCartographic(cartesian3);
+            //console.log("cartographic",cartographic);
+            var obj={};
+            obj.lat=Cesium.Math.toDegrees(cartographic.latitude);
+            obj.lng=Cesium.Math.toDegrees(cartographic.longitude);
+            //obj.alt=0;
+            objArr.push(obj);
+          }
+          console.log("采集的攻击箭头(经纬度)",objArr);
+          console.log("采集的攻击箭头关键点",entity.polygon.hierarchy.getValue().keyPoints);
+        }
+
+      }
+    }
+        
+    </script>
+</head>
+<body onload="load()">
+<input type="button" value="军事标绘-攻击箭头采集（右击结束采集）" onclick="gatherAttackArrow()"  style="position:absolute;left:50px;top:50px;background: blue;color:white;z-index: 9999;font-size: 24px"/>
+<div id="map" style='z-index:100;position: absolute;top: 0; bottom: 0;right: 0;left: 0;'></div>
+</body>
+</html>
+

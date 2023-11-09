@@ -3,10 +3,10 @@
  * @Email: chriswoodcn@aliyun.com
  * @Date: 2023-11-02 19:18:05
  * @LastEditors: chriswoodcn
- * @LastEditTime: 2023-11-08 22:40:14
+ * @LastEditTime: 2023-11-09 14:17:41
  * @FilePath: \three-demo\src\main.js
- * @Description: 
- * Copyright (c) 2023 by chriswoodcn, All Rights Reserved. 
+ * @Description:
+ * Copyright (c) 2023 by chriswoodcn, All Rights Reserved.
  */
 import { createApp } from "vue";
 import "./style.css";
@@ -25,7 +25,8 @@ import "virtual:uno.css";
 // import App from "./cesium/011-osm_building/App.vue";
 // import App from "./cesium/012-osm_building_info/App.vue";
 // import App from "./cesium/013-osm_building_color/App.vue";
-import App from "./cesium/014-osm_building_luminous/App.vue";
+// import App from "./cesium/014-osm_building_luminous/App.vue";
+import App from "./cesium/015-military_plotting_arrow/App.vue";
 // Register Components
 import { registerGlobalComponents } from "./components";
 
