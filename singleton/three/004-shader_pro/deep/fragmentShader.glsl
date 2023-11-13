@@ -14,6 +14,21 @@ vec2 rotate(vec2 uv,float rotation,vec2 mid){
 }
 
 void main(){
+    // 根据鼠标移动位置 进行变色
+    // vec3 color = vec3(uMouse.x / uWindow.x, uMouse.y / uWindow.y, 0.0);
+    // gl_FragColor = vec4(color, 1.0);
+    
+    // Mix() 混合   mix(x,y,a)  a控制混合结果 return x(1-a) +y*a  返回线性混合的值
+    // gl_FragCoord 是GLSL 自带属性，为 vec4，
+    // gl_FragCoord存储了活动线程正在处理的像素或屏幕碎片的坐标。有了它我们就知道了屏幕上的哪一个线程正在运转
+    // 分别对应x, y, z 以及1/w，w 为坐标经过投影矩阵变化后的新的坐标
+    // gl_FragCoord.z / gl_FragCoord.w 可以获得当前片元距离相机的距离
+    // vec2 uv = gl_FragCoord.xy/uWindow;
+    // vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), uv.x);
+    // 等同于下面的写法
+    // vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(uv.y, uv.y, uv.y));
+    // float stren = (sin(uTime*10.0) + 1.1)/2.0;
+    // gl_FragColor = vec4(color, 1);
     // gl_FragColor = vec4(vUv, 0.0, 1.0);
     
     // 渐变 x 0-1从左到右
@@ -81,26 +96,29 @@ void main(){
     // gl_FragColor=vec4(stength,stength,stength,1.);
     
     // 根据相除 实现星星
-    vec2 rotateUv=rotate(vUv,(uTime*2.0),vec2(.5,.5));
-    float stength=.3/distance(vec2(rotateUv.x,(rotateUv.y-.5)*5.+.5),vec2(.5,.5))-1.;
-    stength+=.3/distance(vec2(rotateUv.y,(rotateUv.x-.5)*5.+.5),vec2(.5,.5))-1.;
+    // vec2 rotateUv=rotate(vUv,(uTime*2.0),vec2(.5,.5));
+    // float stength=.3/distance(vec2(rotateUv.x,(rotateUv.y-.5)*5.+.5),vec2(.5,.5))-1.;
+    // stength+=.3/distance(vec2(rotateUv.y,(rotateUv.x-.5)*5.+.5),vec2(.5,.5))-1.;
+    // gl_FragColor=vec4(stength,stength,stength,1);
     
-    gl_FragColor=vec4(stength,stength,stength,1);
+    // 绘制圆
+    // float strength=1.-step(.5,distance(vUv,vec2(.5))+.05);
+    // 绘制圆环
+    // float strength=1.-step(.5,distance(vUv,vec2(.5)));
+    // strength*=step(.5,distance(vUv,vec2(.5))+.25);
+    //渐变环
+    // float strength=abs(distance(vUv,vec2(.5))-.25);
+    // 绘制圆环
+    // float strength=1.-step(.1,abs(distance(vUv,vec2(.5))-.25));
+    // 波浪环
+    vec2 waveUv=vec2(
+        vUv.x+sin(vUv.y*mod(uTime*2.,3.)*10.)*.1,
+        vUv.y+sin(vUv.x*mod(uTime*2.,3.)*10.)*.1
+    );
+    float strength=1.-step(.01,abs(distance(waveUv,vec2(.5))-.25));
+    // 取模 多个圆环
+    // float strength=1.-step(.2,mod(abs(distance(vUv,vec2(.5))-.25*uTime)*20.,1.));
     
-    // gl_FragColor = vec4(stength, stength ,stength, 1.0);
-    // 根据鼠标移动位置 进行变色
-    // vec3 color = vec3(uMouse.x / uWindow.x, uMouse.y / uWindow.y, 0.0);
-    // gl_FragColor = vec4(color, 1.0);
+    gl_FragColor=vec4(strength,strength,strength,1);
     
-    // Mix() 混合   mix(x,y,a)  a控制混合结果 return x(1-a) +y*a  返回线性混合的值
-    // gl_FragCoord 是GLSL 自带属性，为 vec4，
-    // gl_FragCoord存储了活动线程正在处理的像素或屏幕碎片的坐标。有了它我们就知道了屏幕上的哪一个线程正在运转
-    // 分别对应x, y, z 以及1/w，w 为坐标经过投影矩阵变化后的新的坐标
-    // gl_FragCoord.z / gl_FragCoord.w 可以获得当前片元距离相机的距离
-    // vec2 uv = gl_FragCoord.xy/uWindow;
-    // vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), uv.x);
-    // 等同于下面的写法
-    // vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(uv.y, uv.y, uv.y));
-    // float stren = (sin(uTime*10.0) + 1.1)/2.0;
-    // gl_FragColor = vec4(color, 1);
 }
