@@ -111,14 +111,36 @@ void main(){
     // 绘制圆环
     // float strength=1.-step(.1,abs(distance(vUv,vec2(.5))-.25));
     // 波浪环
-    vec2 waveUv=vec2(
-        vUv.x+sin(vUv.y*mod(uTime*2.,3.)*10.)*.1,
-        vUv.y+sin(vUv.x*mod(uTime*2.,3.)*10.)*.1
-    );
-    float strength=1.-step(.01,abs(distance(waveUv,vec2(.5))-.25));
+    // vec2 waveUv=vec2(
+        //     vUv.x+sin(vUv.y*mod(uTime*2.,3.)*10.)*.1,
+        //     vUv.y+sin(vUv.x*mod(uTime*2.,3.)*10.)*.1
+    // );
+    // float strength=1.-step(.01,abs(distance(waveUv,vec2(.5))-.25));
     // 取模 多个圆环
     // float strength=1.-step(.2,mod(abs(distance(vUv,vec2(.5))-.25*uTime)*20.,1.));
+    // 根据角度显示视图 atan
+    // float angle=atan(vUv.x,vUv.y);
+    // float strength=angle;
+    // 根据角度实现螺旋渐变
+    // float angle=atan(vUv.x-.5,vUv.y-.5);
+    // float strength=(angle+3.14)/6.28;
+    // 实现雷达扫描
+    // vec2 rotateUv=rotate(vUv,(uTime*4.),vec2(.5,.5));
+    // float angle=atan(rotateUv.x-.5,rotateUv.y-.5);
+    // float strength=(angle+3.14)/6.28;
+    // gl_FragColor=vec4(strength,strength,strength,1.);
     
-    gl_FragColor=vec4(strength,strength,strength,1);
+    // 万花筒
+    vec2 rotateUv=rotate(vUv,(uTime*2.),vec2(.5,.5));
+    float angle=atan(vUv.x-.5,vUv.y-.5)/6.28;
+    // float strength=mod(angle*20.,1.);
+    // float strength=sin(angle*100.);
+    float strength=sin(angle*100.*sin(uTime));
+    gl_FragColor=vec4(strength,strength,strength,1.);
     
+
+    //噪声 noise函数 
+    //实现烟雾 波纹效果
+    
+
 }
