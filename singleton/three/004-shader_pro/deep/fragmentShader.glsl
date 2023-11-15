@@ -12,6 +12,20 @@ vec2 rotate(vec2 uv,float rotation,vec2 mid){
         cos(rotation)*(uv.y-mid.y)-sin(rotation)*(uv.x-mid.x)+mid.y
     );
 }
+float random(vec2 uv){
+    return fract(sin(dot(uv,vec2(12.9898,78.233)))*43758.5453123);
+}
+float noise(in vec2 _st){
+    vec2 i=floor(_st);
+    vec2 f=fract(_st);
+    
+    float a=random(i);
+    float b=random(i+vec2(1.,0.));
+    float c=random(i+vec2(0.,1.));
+    float d=random(i+vec2(1.,1.));
+    vec2 u=f*f*(3.-2.*f);
+    return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y;
+}
 
 void main(){
     // 根据鼠标移动位置 进行变色
@@ -131,16 +145,21 @@ void main(){
     // gl_FragColor=vec4(strength,strength,strength,1.);
     
     // 万花筒
-    vec2 rotateUv=rotate(vUv,(uTime*2.),vec2(.5,.5));
-    float angle=atan(vUv.x-.5,vUv.y-.5)/6.28;
+    // vec2 rotateUv=rotate(vUv,(uTime*2.),vec2(.5,.5));
+    // float angle=atan(vUv.x-.5,vUv.y-.5)/6.28;
     // float strength=mod(angle*20.,1.);
     // float strength=sin(angle*100.);
-    float strength=sin(angle*100.*sin(uTime));
-    gl_FragColor=vec4(strength,strength,strength,1.);
+    // float strength=sin(angle*100.*sin(uTime));
+    // gl_FragColor=vec4(strength,strength,strength,1.);
     
-
-    //噪声 noise函数 
+    //噪声 noise函数
     //实现烟雾 波纹效果
-    
+    // float strength=step(.5,noise(vUv*20.+uTime*5.));
+    // float strength=abs(noise(vUv*20.));
+    float strength=sin(noise(vUv*20.)*20.+uTime*10.);
+    gl_FragColor=vec4(strength,strength,strength,1.);
 
+    //mix混合顔色
+    //mix(vec3,vec3,alpha)
+    // 任意混合两种颜色,根据alpha值0-1来判断混合更多的第一种还是第二种颜色
 }
